@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="Sheet2">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(-45deg, #4facfe, #397174, #43e97b, #38f9d7);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      text-align: center;
+      color: #fff;
+      width: 400px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .captcha-box {
+      font-weight: 600;
+      margin: 15px 0;
+      background: rgba(255,255,255,0.2);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #00c9ff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #007acc;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 15px;
+      color: #fff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .error {
+      color: #ff6961;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>Teacher Login</h1>
+    
+    <form method="POST" action="/teacher-login">
+      <input type="text" name="teacherUserId" placeholder="User ID" required>
+      <input type="password" name="teacherPassword" placeholder="Password" required>
+      <div class="captcha-box">{{ captcha }}</div>
+      <input type="text" name="captchaInput" placeholder="Enter CAPTCHA" required>
+      <button type="submit">Login</button>
+    </form>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+  </div>
+</body>
+</html>

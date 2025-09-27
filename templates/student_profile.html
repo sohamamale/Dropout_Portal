@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ student['Student Name'] }} - Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background:#f8f9fa;
+            margin:0;
+        }
+        header {
+            background:#343a40;
+            color:white;
+            padding:15px;
+            text-align:center;
+        }
+        .container {
+            padding:30px;
+            display:flex;
+            justify-content:center;
+            flex-direction:column;
+            align-items:center;
+        }
+        .card {
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0 0 15px rgba(0,0,0,0.2);
+            width:90%;
+            max-width:800px;
+            margin-bottom:20px;
+        }
+        h2 { margin-top:0; text-align:center; }
+        table {
+            width:100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding:12px;
+            border-bottom:1px solid #ddd;
+            text-align:left;
+        }
+        th { background:#f1f1f1; }
+        .btn {
+            display:inline-block;
+            padding:10px 20px;
+            background:#007bff;
+            color:white;
+            border:none;
+            border-radius:5px;
+            text-decoration:none;
+            cursor:pointer;
+            margin-top:10px;
+        }
+        .btn:hover { background:#0056b3; }
+        form textarea {
+            width:100%;
+            height:100px;
+            padding:10px;
+            margin-top:10px;
+            margin-bottom:10px;
+            border-radius:5px;
+            border:1px solid #ccc;
+            resize:none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Student Profile: {{ student['Student Name'] }}</h1>
+    </header>
+
+    <div class="container">
+
+        <!-- Student Details -->
+        <div class="card">
+            <h2>Details</h2>
+            <table>
+                {% for key, value in student.items() %}
+                <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Counseling Form -->
+        <div class="card">
+            <h2>Schedule Counseling</h2>
+            <form action="{{ url_for('schedule_counseling', sr_no=student['Sr No']) }}" method="POST">
+                <label for="message">Enter your message or notes:</label>
+                <textarea id="message" name="message" placeholder="Write your counseling message here..." required></textarea>
+                <button type="submit" class="btn">Schedule Counseling</button>
+            </form>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <a href="{{ url_for('teacher_dashboard') }}" class="btn">Back to Dashboard</a>
+
+    </div>
+</body>
+</html>
