@@ -104,7 +104,10 @@
       <div class="error">{{ error }}</div>
     {% endif %}
 
-    <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+    <div style="margin-top: 15px;">
+      <a href="/teacher-register" class="back-link" style="margin-right: 20px;">New Teacher? Register</a>
+      <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+    </div>
   </div>
 </body>
 </html>

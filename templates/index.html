@@ -140,45 +140,14 @@
                         <input type="text" id="student-otp" name="studentOTP" class="mt-1 block w-full rounded-md bg-slate-700 border-transparent focus:border-slate-500 focus:ring focus:ring-slate-500 focus:ring-opacity-50 text-slate-200">
                     </div>
                     <div class="flex justify-between items-center text-sm">
-                        <div id="captcha-container-student" class="bg-slate-700 text-slate-200 text-lg px-4 py-2 rounded-md font-mono tracking-widest"></div>
                         <button type="button" id="verify-otp-btn-student" class="py-2 px-4 rounded-md font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors duration-300 ease-in-out">Verify OTP</button>
-                    </div>
-                    <div>
-                        <label for="student-captcha" class="block text-sm font-medium text-slate-400">Enter CAPTCHA</label>
-                        <input type="text" id="student-captcha" name="captchaInput" class="mt-1 block w-full rounded-md bg-slate-700 border-transparent focus:border-slate-500 focus:ring focus:ring-slate-500 focus:ring-opacity-50 text-slate-200">
                     </div>
                     <button type="submit" id="student-login-btn" class="w-full py-2 px-4 rounded-md font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors duration-300 ease-in-out">Login</button>
                 </form>
                 <div id="student-message" class="mt-4 text-center text-sm"></div>
             </div>
 
-            <!-- Teacher Login Form -->
-            <div id="teacher-login" class="login-form absolute w-full max-w-md bg-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col justify-center">
-                <h2 class="text-3xl font-bold text-center mb-6 text-cyan-300">Teacher Login</h2>
-                <form action="/teacher-login" method="POST" class="space-y-4">
-                    <div>
-                        <label for="teacher-user-id" class="block text-sm font-medium text-slate-400">User ID</label>
-                        <input type="text" id="teacher-user-id" name="teacherUserId" class="mt-1 block w-full rounded-md bg-slate-700 border-transparent focus:border-slate-500 focus:ring focus:ring-slate-500 focus:ring-opacity-50 text-slate-200">
-                    </div>
-                    <div class="relative">
-                        <label for="teacher-password" class="block text-sm font-medium text-slate-400">Password</label>
-                        <input type="password" id="teacher-password" name="teacherPassword" class="mt-1 block w-full rounded-md bg-slate-700 border-transparent focus:border-slate-500 focus:ring focus:ring-slate-500 focus:ring-opacity-50 text-slate-200">
-                        <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-sm text-slate-400 hover:text-slate-200">
-                            Show
-                        </button>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <a href="/teacher-register" class="text-cyan-400 hover:underline">New Teacher? Register</a>
-                        <div id="captcha-container-teacher" class="bg-slate-700 text-slate-200 text-lg px-4 py-2 rounded-md font-mono tracking-widest"></div>
-                    </div>
-                    <div>
-                        <label for="teacher-captcha" class="block text-sm font-medium text-slate-400">Enter CAPTCHA</label>
-                        <input type="text" id="teacher-captcha" name="captchaInput" class="mt-1 block w-full rounded-md bg-slate-700 border-transparent focus:border-slate-500 focus:ring focus:ring-slate-500 focus:ring-opacity-50 text-slate-200">
-                    </div>
-                    <button type="submit" id="teacher-login-btn" class="w-full py-2 px-4 rounded-md font-semibold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors duration-300 ease-in-out">Login</button>
-                </form>
-                <div id="teacher-message" class="mt-4 text-center text-sm"></div>
-            </div>
+            <!-- Teacher login now redirects to dedicated page -->
 
             <!-- Forgot Password Modal -->
             <div id="forgot-password-modal" class="login-form absolute w-full max-w-md bg-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col justify-center">
@@ -210,7 +179,6 @@
         const mainContainer = document.getElementById('main-container');
         const loginContainer = document.getElementById('login-container');
         const studentLoginForm = document.getElementById('student-login');
-        const teacherLoginForm = document.getElementById('teacher-login');
         const forgotPasswordModal = document.getElementById('forgot-password-modal');
         const backBtn = document.getElementById('back-btn');
 
@@ -220,41 +188,13 @@
         const verifyOtpBtn = document.getElementById('verify-otp-btn');
         const verifyOtpBtnStudent = document.getElementById('verify-otp-btn-student');
 
-        const togglePasswordBtn = document.getElementById('toggle-password');
-        const teacherPasswordInput = document.getElementById('teacher-password');
+        // Teacher login now redirects to dedicated page - no local form needed
 
-        const captchaContainerStudent = document.getElementById('captcha-container-student');
-        const studentCaptchaInput = document.getElementById('student-captcha');
-        const captchaContainerTeacher = document.getElementById('captcha-container-teacher');
-        const teacherCaptchaInput = document.getElementById('teacher-captcha');
-
-        let studentCaptcha = '';
-        let teacherCaptcha = '';
-
-        function generateCaptcha() {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let captcha = '';
-            for (let i = 0; i < 6; i++) {
-                captcha += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return captcha;
-        }
-
-        function refreshCaptchas() {
-            studentCaptcha = generateCaptcha();
-            captchaContainerStudent.textContent = studentCaptcha;
-            teacherCaptcha = generateCaptcha();
-            captchaContainerTeacher.textContent = teacherCaptcha;
-        }
-
-        refreshCaptchas();
+        // CAPTCHA is now handled by Flask backend - no JavaScript generation needed
 
         function showLogin(form) {
             mainContainer.classList.add('scale-0', 'opacity-0');
             mainContainer.classList.remove('scale-100', 'opacity-100');
-            
-            // Generate fresh CAPTCHAs when showing login forms
-            refreshCaptchas();
             
             setTimeout(() => {
                 loginContainer.classList.add('scale-100', 'opacity-100');
@@ -273,7 +213,6 @@
                 mainContainer.classList.remove('scale-0', 'opacity-0');
                 forgotPasswordModal.classList.remove('active');
                 otpSection.classList.remove('visible');
-                refreshCaptchas();
             }, 300);
         }
 
@@ -282,7 +221,8 @@
         });
 
         teacherBtn.addEventListener('click', () => {
-            showLogin(teacherLoginForm);
+            // Redirect to dedicated teacher login page
+            window.location.href = '/teacher-login';
         });
 
         backBtn.addEventListener('click', () => {
@@ -312,60 +252,8 @@
             togglePasswordBtn.textContent = type === 'password' ? 'Show' : 'Hide';
         });
 
-        // Mock login and validation
-        document.getElementById('student-login-btn').addEventListener('click', () => {
-            const prn = document.getElementById('student-prn').value;
-            const otp = document.getElementById('student-otp').value;
-            const enteredCaptcha = studentCaptchaInput.value;
-            const messageDiv = document.getElementById('student-message');
-
-            if (prn === '' || otp === '') {
-                messageDiv.textContent = 'Please fill in all fields.';
-                messageDiv.classList.add('text-red-400');
-                return;
-            }
-
-            if (enteredCaptcha.toLowerCase() !== studentCaptcha.toLowerCase()) {
-                messageDiv.textContent = 'CAPTCHA is incorrect.';
-                messageDiv.classList.add('text-red-400');
-                refreshCaptchas();
-                return;
-            }
-
-            // Successful Login
-            messageDiv.textContent = 'Student Login Successful!';
-            messageDiv.classList.remove('text-red-400');
-            messageDiv.classList.add('text-green-400');
-            console.log('Student logged in successfully.');
-            // Here you would redirect the user or load the dashboard content
-        });
-
-        document.getElementById('teacher-login-btn').addEventListener('click', () => {
-            const userId = document.getElementById('teacher-user-id').value;
-            const password = document.getElementById('teacher-password').value;
-            const enteredCaptcha = teacherCaptchaInput.value;
-            const messageDiv = document.getElementById('teacher-message');
-
-            if (userId === '' || password === '') {
-                messageDiv.textContent = 'Please fill in all fields.';
-                messageDiv.classList.add('text-red-400');
-                return;
-            }
-
-            if (enteredCaptcha.toLowerCase() !== teacherCaptcha.toLowerCase()) {
-                messageDiv.textContent = 'CAPTCHA is incorrect.';
-                messageDiv.classList.add('text-red-400');
-                refreshCaptchas();
-                return;
-            }
-
-            // Successful Login
-            messageDiv.textContent = 'Teacher Login Successful!';
-            messageDiv.classList.remove('text-red-400');
-            messageDiv.classList.add('text-green-400');
-            console.log('Teacher logged in successfully.');
-            // Here you would redirect the user or load the dashboard content
-        });
+        // Remove JavaScript validation - let forms submit directly to Flask routes
+        // The Flask backend handles all validation including CAPTCHA
         
     </script>
 </body>

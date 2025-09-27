@@ -31,55 +31,7 @@ except Exception as e:
     print(f"Google Sheets not available: {e}")
     print("Using local file storage as fallback")
 
-# Local storage file for teacher data
-TEACHERS_FILE = "teachers_data.json"
-
-# ------------------ LOCAL STORAGE FUNCTIONS ------------------
-def load_teachers_data():
-    """Load teacher data from local JSON file"""
-    if os.path.exists(TEACHERS_FILE):
-        try:
-            with open(TEACHERS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return []
-    return []
-
-def save_teachers_data(teachers_data):
-    """Save teacher data to local JSON file"""
-    try:
-        with open(TEACHERS_FILE, 'w') as f:
-            json.dump(teachers_data, f, indent=2)
-        return True
-    except:
-        return False
-
-def add_teacher_to_local(teacher_data):
-    """Add a new teacher to local storage"""
-    teachers = load_teachers_data()
-    
-    # Check if user ID already exists
-    for teacher in teachers:
-        if teacher.get("teacherUserId") == teacher_data["teacherUserId"]:
-            return False, "User ID already exists"
-    
-    # Add new teacher
-    teachers.append(teacher_data)
-    
-    if save_teachers_data(teachers):
-        return True, "Teacher registered successfully"
-    else:
-        return False, "Failed to save teacher data"
-
-def check_teacher_credentials_local(userid, password):
-    """Check teacher credentials from local storage"""
-    teachers = load_teachers_data()
-    
-    for teacher in teachers:
-        if (teacher.get("teacherUserId") == userid and 
-            teacher.get("teacherPassword") == password):
-            return True
-    return False
+# Teacher data is now stored exclusively in Google Sheets
 
 
 @app.route("/test-form", methods=["POST"])
@@ -124,77 +76,92 @@ def fetch_student_data():
 
 
 def check_teacher_credentials(userid, password):
-    if GOOGLE_SHEETS_AVAILABLE:
-        try:
-            # Use the specific spreadsheet name and sheet name
-            teacher_sheet = CLIENT.open("Login And Register").worksheet("DATA")
-            
-            # Try to get records with expected headers to avoid duplicate header error
-            expected_headers = ["UserID", "Password", "Name", "Email", "Phone", "Department", "Subject"]
-            accounts = teacher_sheet.get_all_records(expected_headers=expected_headers)
-
-            print("DEBUG: Accounts from sheet ->", accounts)
-
-            for account in accounts:
-                user = str(account.get("UserID", "")).strip()
-                pw = str(account.get("Password", "")).strip()
-                print(f"DEBUG comparing: input=({userid},{password}) vs sheet=({user},{pw})")
-
-                if user == str(userid).strip() and pw == str(password).strip():
-                    print("DEBUG: MATCH FOUND ✅")
-                    return True
-
-            print("DEBUG: NO MATCH ❌")
+    if not GOOGLE_SHEETS_AVAILABLE:
+        print("ERROR: Google Sheets not available - authentication cannot proceed")
+        return False
+    
+    try:
+        teacher_sheet = CLIENT.open("Login And Register").worksheet("DATA")
+        # Fetch all values and map to headers manually
+        all_values = teacher_sheet.get_all_values()
+        if not all_values or len(all_values) < 2:
+            print("No teacher data found in Google Sheets")
             return False
-        except Exception as e:
-            print("ERROR in check_teacher_credentials (Google Sheets):", e)
-            print("Falling back to local storage")
-            return check_teacher_credentials_local(userid, password)
-    else:
-        print("Using local storage for teacher credentials")
-        return check_teacher_credentials_local(userid, password)
+            
+        headers = all_values[0]
+        accounts = []
+        for row in all_values[1:]:
+            if len(row) < len(headers):
+                row += [""] * (len(headers) - len(row))
+            account = dict(zip(headers, row))
+            accounts.append(account)
+
+        print("DEBUG: Checking credentials against Google Sheets")
+        print(f"DEBUG: Found {len(accounts)} teacher accounts")
+
+        for account in accounts:
+            user = str(account.get("UserID", "")).strip()
+            pw = str(account.get("Password", "")).strip()
+            print(f"DEBUG comparing: input=({userid},{password}) vs sheet=({user},{pw})")
+
+            if user == str(userid).strip() and pw == str(password).strip():
+                print("DEBUG: MATCH FOUND ✅")
+                return True
+
+        print("DEBUG: NO MATCH ❌")
+        return False
+        
+    except Exception as e:
+        print(f"ERROR in check_teacher_credentials (Google Sheets): {e}")
+        print("Authentication failed - Google Sheets connection error")
+        return False
 
 
 def register_teacher(teacher_data):
-    if GOOGLE_SHEETS_AVAILABLE:
-        try:
-            # Use the specific spreadsheet name and sheet name
-            teacher_sheet = CLIENT.open("Login And Register").worksheet("DATA")
-            
-            # Check if headers exist, if not create them
-            headers = teacher_sheet.row_values(1)
-            if not headers or headers == ['']:
-                headers = ["UserID", "Password", "Name", "Email", "Phone", "Department", "Subject"]
-                teacher_sheet.insert_row(headers, 1)
-            
-            # Check if user ID already exists using expected headers
-            expected_headers = ["UserID", "Password", "Name", "Email", "Phone", "Department", "Subject"]
-            existing_records = teacher_sheet.get_all_records(expected_headers=expected_headers)
-            for record in existing_records:
-                if str(record.get("UserID", "")).strip() == str(teacher_data["teacherUserId"]).strip():
-                    return False, "User ID already exists"
-            
-            # Add new teacher record
-            new_row = [
-                teacher_data["teacherUserId"],
-                teacher_data["teacherPassword"],
-                teacher_data["teacherName"],
-                teacher_data["teacherEmail"],
-                teacher_data["teacherPhone"],
-                teacher_data["teacherDepartment"],
-                teacher_data["teacherSubject"]
-            ]
-            
-            teacher_sheet.append_row(new_row)
-            return True, "Teacher registered successfully"
-            
-        except Exception as e:
-            print("ERROR in register_teacher (Google Sheets):", e)
-            print("Falling back to local storage")
-            return add_teacher_to_local(teacher_data)
-    else:
-        print("Using local storage for teacher registration")
-        return add_teacher_to_local(teacher_data)
+    if not GOOGLE_SHEETS_AVAILABLE:
+        print("ERROR: Google Sheets not available - registration cannot proceed")
+        return False, "Registration service unavailable - Google Sheets connection required"
+    
+    try:
+        teacher_sheet = CLIENT.open("Login And Register").worksheet("DATA")
+        headers = teacher_sheet.row_values(1)
+        if not headers or headers == ['']:
+            headers = ["UserID", "Password", "Name", "Email", "Phone", "Department", "Subject"]
+            teacher_sheet.insert_row(headers, 1)
+            headers = teacher_sheet.row_values(1)  # Refresh headers
+
+        # Fetch all values and map to headers manually
+        all_values = teacher_sheet.get_all_values()
+        if not all_values or len(all_values) < 2:
+            existing_records = []
+        else:
+            sheet_headers = all_values[0]
+            existing_records = []
+            for row in all_values[1:]:
+                if len(row) < len(sheet_headers):
+                    row += [""] * (len(sheet_headers) - len(row))
+                record = dict(zip(sheet_headers, row))
+                existing_records.append(record)
+
+        for record in existing_records:
+            if str(record.get("UserID", "")).strip() == str(teacher_data["teacherUserId"]).strip():
+                return False, "User ID already exists"
+
+        new_row = [
+            teacher_data["teacherUserId"],
+            teacher_data["teacherPassword"],
+            teacher_data["teacherName"],
+            teacher_data["teacherEmail"],
+            teacher_data["teacherPhone"],
+            teacher_data["teacherDepartment"],
+            teacher_data["teacherSubject"]
+        ]
+        teacher_sheet.append_row(new_row)
+        return True, "Teacher registered successfully"
+
+    except Exception as e:
+        print(f"ERROR in register_teacher (Google Sheets): {e}")
+        return False, "Registration failed - Google Sheets connection error"
 
 
 
@@ -282,11 +249,18 @@ def teacher_login():
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
 
+        # Generate fresh CAPTCHA for next attempt
+        fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        session["captcha"] = fresh_captcha
+
         if captcha_input != captcha_code:
-            return render_template("teacher-login.html", captcha=captcha_code, error="CAPTCHA incorrect")
+            return render_template("teacher-login.html", captcha=fresh_captcha, error="CAPTCHA incorrect")
 
         if not check_teacher_credentials(userid, password):
-            return render_template("teacher-login.html", captcha=captcha_code, error="Invalid UserID or Password")
+            if not GOOGLE_SHEETS_AVAILABLE:
+                return render_template("teacher-login.html", captcha=fresh_captcha, error="Authentication service unavailable - Google Sheets connection required")
+            else:
+                return render_template("teacher-login.html", captcha=fresh_captcha, error="Invalid UserID or Password")
 
         # ✅ Success → store teacher session and redirect
         session['teacher_logged_in'] = True
