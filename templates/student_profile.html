@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ student['Student Name'] }} - Profile</title>
+    <title>{{ student.get('Student Name', student.get('Name', 'Student')) }} - Profile</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -68,7 +68,7 @@
 </head>
 <body>
     <header>
-        <h1>Student Profile: {{ student['Student Name'] }}</h1>
+        <h1>Student Profile: {{ student.get('Student Name', student.get('Name', 'Student')) }}</h1>
     </header>
 
     <div class="container">

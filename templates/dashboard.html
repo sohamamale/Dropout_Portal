@@ -8,11 +8,17 @@
         header { background:#343a40; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center; }
         .google-sheet-btn { background:#007bff; color:white; padding:10px 15px; border:none; border-radius:5px; text-decoration:none; }
         .container { padding:20px; }
-        table { width:100%; border-collapse: collapse; background:white; border-radius:10px; overflow:hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+        table { width:100%; border-collapse: collapse; background:white; border-radius:10px; overflow:hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         th, td { padding:12px; border-bottom:1px solid #ddd; text-align:left; }
-        th { background:#f1f1f1; }
+        th { background:#f1f1f1; font-weight:600; }
         a.name-link { color:#007bff; text-decoration:none; }
         a.name-link:hover { text-decoration: underline; }
+        .table-container { overflow-x: auto; }
+        .dropout-high { color: #dc3545; font-weight: bold; }
+        .dropout-medium { color: #ffc107; font-weight: bold; }
+        .dropout-low { color: #28a745; font-weight: bold; }
+        .attendance-cell { text-align: center; }
+        .fees-cell { text-align: center; }
     </style>
 </head>
 <body>
@@ -24,39 +30,41 @@
         </div>
     </header>
     <div class="container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Sr No</th>
-                    <th>Student Name</th>
-                    <th>CGPA</th>
-                    <th>Present Days</th>
-                    <th>Total Days</th>
-                    <th>Attendance (%)</th>
-                    <th>Dropout Chance</th>
-                    <th>Fees Paid</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student in data %}
-                <tr>
-                    <td>{{ student["Sr No"] }}</td>
-                    <td><a href="{{ url_for('student_profile', sr_no=student['Sr No']) }}" class="name-link">{{ student["Student Name"] }}</a></td>
-                    <td>{{ student["CGPA"] }}</td>
-                    <td>{{ student["Present Days"] }}</td>
-                    <td>{{ student["Total Days"] }}</td>
-                    <td>{{ student["Attendance (%)"] }}%</td>
-                    <td style="color: {{ 'red' if student['Dropout Chance']|int >= 70 
-                     else 'yellow' if student['Dropout Chance']|int >= 40 
-                     else 'green' }}">
-    {{ student["Dropout Chance"] }}%
-</td>
-
-                    <td>{{ student["Fees paid"] }}/{{ student["Total fees"] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        {% for header in headers %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in data %}
+                    <tr>
+                        {% for header in headers %}
+                        <td>
+                            {% if header.lower() in ['student name', 'name'] and student.get('Sr No') %}
+                                <a href="{{ url_for('student_profile', sr_no=student['Sr No']) }}" class="name-link">{{ student[header] }}</a>
+                            {% elif 'dropout' in header.lower() and student[header] %}
+                                {% set dropout_value = student[header]|replace('%', '')|int %}
+                                <span class="{% if dropout_value >= 70 %}dropout-high{% elif dropout_value >= 40 %}dropout-medium{% else %}dropout-low{% endif %}">
+                                    {{ student[header] }}{% if '%' not in student[header] %}%{% endif %}
+                                </span>
+                            {% elif 'attendance' in header.lower() and student[header] %}
+                                <span class="attendance-cell">{{ student[header] }}{% if '%' not in student[header] %}%{% endif %}</span>
+                            {% elif 'fees' in header.lower() and student[header] %}
+                                <span class="fees-cell">{{ student[header] }}</span>
+                            {% else %}
+                                {{ student[header] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

@@ -42,37 +42,54 @@ def test_form():
 
 # ------------------ HELPER FUNCTIONS ------------------
 def fetch_student_data():
-    headers = [
-        "Sr No", "Student Name", "CGPA", "Present Days", "Total Days",
-        "Attendance (%)", "GP", "Total Points", "Percent Garde points",
-        "Dropout Chance", "Fees paid", "Total fees", "Contact Details"
-    ]
-
     try:
         all_values = sheet.get_all_values()
         data = []
 
         if len(all_values) < 2:
-            return data
+            return data, []
 
+        # Use actual column headers from the spreadsheet
         sheet_headers = all_values[0]
+        print(f"DEBUG: Found columns in spreadsheet: {sheet_headers}")
+        
+        # Filter out empty columns and formula columns
+        filtered_headers = []
+        filtered_indices = []
+        
+        for i, header in enumerate(sheet_headers):
+            # Skip empty headers or headers that are just spaces
+            if not header or header.strip() == "":
+                continue
+            # Skip columns that are likely formulas (contain parentheses or start with =)
+            if "(" in header or ")" in header or header.strip().startswith("="):
+                continue
+            # Skip columns that are just single letters (likely formula references)
+            if len(header.strip()) == 1 and header.strip().isalpha():
+                continue
+                
+            filtered_headers.append(header)
+            filtered_indices.append(i)
+        
+        print(f"DEBUG: Filtered headers for display: {filtered_headers}")
+        
         for row in all_values[1:]:
-            # Skip rows with empty Sr No
+            # Skip rows with empty first column (assuming first column is ID/Sr No)
             if not row or not row[0] or row[0].strip() == "":
                 continue
                 
+            # Create row dictionary using only filtered columns
             row_dict = {}
-            for i, h in enumerate(headers):
-                try:
-                    idx = sheet_headers.index(h)
-                    row_dict[h] = row[idx] if idx < len(row) else ""
-                except ValueError:
-                    row_dict[h] = ""
+            for i, header in enumerate(filtered_headers):
+                col_index = filtered_indices[i]
+                row_dict[header] = row[col_index] if col_index < len(row) else ""
             data.append(row_dict)
-        return data
+            
+        print(f"DEBUG: Processed {len(data)} student records with {len(filtered_headers)} columns")
+        return data, filtered_headers
     except Exception as e:
         print(f"Error fetching student data: {e}")
-        return []
+        return [], []
 
 
 def check_teacher_credentials(userid, password):
@@ -286,28 +303,28 @@ def teacher_dashboard():
     if not session.get('teacher_logged_in'):
         return redirect(url_for('teacher_login'))
     
-    data = fetch_student_data()
-    return render_template("dashboard.html", data=data)
+    data, headers = fetch_student_data()
+    return render_template("dashboard.html", data=data, headers=headers)
 
 
 # ------------------ STUDENT DASHBOARD ------------------
 @app.route("/student-dashboard/<prn>")
 def student_dashboard(prn):
-    data = fetch_student_data()
+    data, headers = fetch_student_data()
     student = next((s for s in data if str(s.get("Sr No")) == str(prn)), None)
     if not student:
         return "Student not found", 404
-    return render_template("student_profile.html", student=student)
+    return render_template("student_profile.html", student=student, headers=headers)
 
 
 # ------------------ STUDENT PROFILE ------------------
 @app.route("/student/<int:sr_no>")
 def student_profile(sr_no):
-    data = fetch_student_data()
+    data, headers = fetch_student_data()
     student = next((s for s in data if str(s.get("Sr No")) == str(sr_no)), None)
     if not student:
         return "Student not found", 404
-    return render_template("student_profile.html", student=student)
+    return render_template("student_profile.html", student=student, headers=headers)
 
 
 # ------------------ COUNSELING ------------------
