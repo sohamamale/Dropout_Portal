@@ -1,0 +1,21 @@
+# Email Configuration for Counselling System
+# Copy this file to email_config.py and update with your credentials
+
+# Gmail SMTP Settings
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+
+# Your Gmail credentials
+# IMPORTANT: Use App Password, not your regular Gmail password
+# To generate App Password:
+# 1. Go to Google Account settings
+# 2. Security → 2-Step Verification (must be enabled)
+# 3. App passwords → Generate app password
+# 4. Use the generated password below
+
+EMAIL_ADDRESS = "your-email@gmail.com"  # Replace with your Gmail
+EMAIL_PASSWORD = "your-app-password"    # Replace with your Gmail App Password
+
+# Email Template Settings
+SCHOOL_NAME = "Your School Name"  # Replace with your school name
+ADMIN_EMAIL = "admin@yourschool.com"  # Replace with admin email

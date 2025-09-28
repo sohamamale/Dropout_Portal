@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"  # Change this to something strong
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # ------------------ GOOGLE SHEETS SETUP ------------------
 SCOPE = ["https://spreadsheets.google.com/feeds",
@@ -20,16 +20,21 @@ GOOGLE_SHEETS_AVAILABLE = False
 CLIENT = None
 sheet = None
 
+# Try to load service account key from environment or file
+SERVICE_ACCOUNT_FILE = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE', 'service-account-key.json')
+
 try:
-    CREDS = Credentials.from_service_account_file(
-        r"D:\Desktop\Droupout\Portal\turing-signer-471919-p2-206e681b55b2.json",
-        scopes=SCOPE
-    )
-    CLIENT = gspread.authorize(CREDS)
-    SHEET_NAME = "Students.Details"   # <-- spreadsheet name
-    sheet = CLIENT.open(SHEET_NAME).sheet1   # main student details (first sheet)
-    GOOGLE_SHEETS_AVAILABLE = True
-    print("Google Sheets connection successful")
+    if os.path.exists(SERVICE_ACCOUNT_FILE):
+        CREDS = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPE)
+        CLIENT = gspread.authorize(CREDS)
+        # Use the existing shared spreadsheet
+        SHEET_NAME = "Students.Details"   # <-- spreadsheet name
+        sheet = CLIENT.open(SHEET_NAME).sheet1   # main student details (first sheet)
+        GOOGLE_SHEETS_AVAILABLE = True
+        print("Google Sheets connection successful")
+    else:
+        print(f"Service account file not found: {SERVICE_ACCOUNT_FILE}")
+        print("Using local storage fallback")
 except Exception as e:
     print(f"Google Sheets not available: {e}")
     print("Using local file storage as fallback")
