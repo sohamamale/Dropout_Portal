@@ -2,69 +2,409 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Teacher Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background:#f8f9fa; margin:0; }
-        header { background:#343a40; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center; }
-        .google-sheet-btn { background:#007bff; color:white; padding:10px 15px; border:none; border-radius:5px; text-decoration:none; }
-        .container { padding:20px; }
-        table { width:100%; border-collapse: collapse; background:white; border-radius:10px; overflow:hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        th, td { padding:12px; border-bottom:1px solid #ddd; text-align:left; }
-        th { background:#f1f1f1; font-weight:600; }
-        a.name-link { color:#007bff; text-decoration:none; }
-        a.name-link:hover { text-decoration: underline; }
-        .table-container { overflow-x: auto; }
-        .dropout-high { color: #dc3545; font-weight: bold; }
-        .dropout-medium { color: #ffc107; font-weight: bold; }
-        .dropout-low { color: #28a745; font-weight: bold; }
-        .attendance-cell { text-align: center; }
-        .fees-cell { text-align: center; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card h2 {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-weight: 500;
+        }
+        
+        .students-table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .name-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .name-link:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .badge-success { background: #c6f6d5; color: #22543d; }
+        .badge-warning { background: #fefcbf; color: #744210; }
+        .badge-danger { background: #fed7d7; color: #742a2a; }
+        
+        .counselling-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            margin-left: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Teacher Dashboard</h1>
-        <div>
-            <a href="https://docs.google.com/spreadsheets/d/1XqMsPCVdA4z-Qgq_DDgsBWXNnvzoAbriTOoi7CUc3D0/" target="_blank" class="google-sheet-btn">Open Google Sheet</a>
-            <a href="{{ url_for('teacher_logout') }}" class="google-sheet-btn" style="background:#dc3545; margin-left:10px;">Logout</a>
-        </div>
-    </header>
-    <div class="container">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        {% for header in headers %}
-                        <th>{{ header }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in data %}
-                    <tr>
-                        {% for header in headers %}
-                        <td>
-                            {% if header.lower() in ['student name', 'name'] and student.get('Sr No') %}
-                                <a href="{{ url_for('student_profile', sr_no=student['Sr No']) }}" class="name-link">{{ student[header] }}</a>
-                            {% elif 'dropout' in header.lower() and student[header] %}
-                                {% set dropout_value = student[header]|replace('%', '')|int %}
-                                <span class="{% if dropout_value >= 70 %}dropout-high{% elif dropout_value >= 40 %}dropout-medium{% else %}dropout-low{% endif %}">
-                                    {{ student[header] }}{% if '%' not in student[header] %}%{% endif %}
-                                </span>
-                            {% elif 'attendance' in header.lower() and student[header] %}
-                                <span class="attendance-cell">{{ student[header] }}{% if '%' not in student[header] %}%{% endif %}</span>
-                            {% elif 'fees' in header.lower() and student[header] %}
-                                <span class="fees-cell">{{ student[header] }}</span>
-                            {% else %}
-                                {{ student[header] }}
-                            {% endif %}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="header">
+        <h1>📊 Teacher Analytics Dashboard</h1>
+        <div class="header-actions">
+            <a href="https://docs.google.com/spreadsheets/d/1XqMsPCVdA4z-Qgq_DDgsBWXNnvzoAbriTOoi7CUc3D0/" target="_blank" class="btn btn-primary">📋 Open Google Sheet</a>
+            <a href="{{ url_for('teacher_logout') }}" class="btn btn-danger">🚪 Logout</a>
         </div>
     </div>
+
+    <div class="container">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" style="color: #667eea;">{{ data|length }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #48bb78;">{{ (data|selectattr('Attendance (%)', 'defined')|selectattr('Attendance (%)', 'ne', '')|map(attribute='Attendance (%)')|map('replace', '%', '')|map('float')|list|sum / (data|selectattr('Attendance (%)', 'defined')|selectattr('Attendance (%)', 'ne', '')|list|length))|round(1) if data|selectattr('Attendance (%)', 'defined')|selectattr('Attendance (%)', 'ne', '')|list|length > 0 else 0 }}%</div>
+                <div class="stat-label">Avg Attendance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #ed8936;">{{ (data|selectattr('CGPA', 'defined')|selectattr('CGPA', 'ne', '')|map(attribute='CGPA')|map('float')|list|sum / (data|selectattr('CGPA', 'defined')|selectattr('CGPA', 'ne', '')|list|length))|round(2) if data|selectattr('CGPA', 'defined')|selectattr('CGPA', 'ne', '')|list|length > 0 else 0 }}</div>
+                <div class="stat-label">Avg CGPA</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #e53e3e;">{{ data|selectattr('Dropout Chance', 'defined')|selectattr('Dropout Chance', 'ne', '')|map(attribute='Dropout Chance')|map('replace', '%', '')|map('float')|select('>=', 70)|list|length }}</div>
+                <div class="stat-label">High Risk Students</div>
+            </div>
+        </div>
+
+        <!-- Analytics Charts -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <h2>📈 Attendance Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>🎓 CGPA Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="cgpaChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="students-table-container">
+            <h2 style="margin-bottom: 1.5rem; color: #2d3748;">👥 Student Records</h2>
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            {% for header in headers %}
+                            <th>{{ header }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in data %}
+                        <tr>
+                            {% for header in headers %}
+                            <td>
+                                {% if header.lower() in ['student name', 'name'] and student.get('Sr No') %}
+                                    <a href="{{ url_for('student_profile', sr_no=student['Sr No']) }}" class="name-link">
+                                        {{ student[header] }}
+                                        {% if student.get('counselling_count', 0) > 0 %}
+                                            <span class="counselling-indicator" title="{{ student.get('counselling_count', 0) }} counselling session(s)"></span>
+                                        {% endif %}
+                                    </a>
+                                {% elif 'dropout' in header.lower() and student[header] %}
+                                    {% set dropout_value = student[header]|replace('%', '')|float %}
+                                    <span class="badge {% if dropout_value >= 70 %}badge-danger{% elif dropout_value >= 40 %}badge-warning{% else %}badge-success{% endif %}">
+                                        {{ student[header] }}{% if '%' not in student[header] %}%{% endif %}
+                                    </span>
+                                {% elif 'attendance' in header.lower() and student[header] %}
+                                    {% set attendance_value = student[header]|replace('%', '')|float %}
+                                    <span class="badge {% if attendance_value >= 75 %}badge-success{% elif attendance_value >= 60 %}badge-warning{% else %}badge-danger{% endif %}">
+                                        {{ student[header] }}{% if '%' not in student[header] %}%{% endif %}
+                                    </span>
+                                {% elif 'cgpa' in header.lower() and student[header] %}
+                                    {% set cgpa_value = student[header]|float %}
+                                    <span class="badge {% if cgpa_value >= 8.0 %}badge-success{% elif cgpa_value >= 6.0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                        {{ student[header] }}
+                                    </span>
+                                {% else %}
+                                    {{ student[header] }}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Prepare data for charts
+        const studentData = {{ data|tojson }};
+        
+        // Attendance Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        const attendanceData = studentData
+            .filter(s => s['Attendance (%)'] && s['Attendance (%)'] !== '')
+            .map(s => parseFloat(s['Attendance (%)'].replace('%', '')));
+        
+        const attendanceRanges = {
+            '90-100%': attendanceData.filter(a => a >= 90).length,
+            '80-89%': attendanceData.filter(a => a >= 80 && a < 90).length,
+            '70-79%': attendanceData.filter(a => a >= 70 && a < 80).length,
+            '60-69%': attendanceData.filter(a => a >= 60 && a < 70).length,
+            'Below 60%': attendanceData.filter(a => a < 60).length
+        };
+        
+        new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(attendanceRanges),
+                datasets: [{
+                    data: Object.values(attendanceRanges),
+                    backgroundColor: [
+                        '#48bb78',
+                        '#68d391',
+                        '#f6e05e',
+                        '#f6ad55',
+                        '#fc8181'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // CGPA Chart
+        const cgpaCtx = document.getElementById('cgpaChart').getContext('2d');
+        const cgpaData = studentData
+            .filter(s => s['CGPA'] && s['CGPA'] !== '')
+            .map(s => parseFloat(s['CGPA']));
+        
+        const cgpaRanges = {
+            '9.0-10.0': cgpaData.filter(c => c >= 9.0).length,
+            '8.0-8.9': cgpaData.filter(c => c >= 8.0 && c < 9.0).length,
+            '7.0-7.9': cgpaData.filter(c => c >= 7.0 && c < 8.0).length,
+            '6.0-6.9': cgpaData.filter(c => c >= 6.0 && c < 7.0).length,
+            'Below 6.0': cgpaData.filter(c => c < 6.0).length
+        };
+        
+        new Chart(cgpaCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(cgpaRanges),
+                datasets: [{
+                    label: 'Number of Students',
+                    data: Object.values(cgpaRanges),
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#f5576c',
+                        '#4facfe'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

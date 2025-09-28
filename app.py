@@ -4,6 +4,9 @@ from google.oauth2.service_account import Credentials
 import random, string
 import json
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Change this to something strong
@@ -32,6 +35,187 @@ except Exception as e:
     print("Using local file storage as fallback")
 
 # Teacher data is now stored exclusively in Google Sheets
+
+# ------------------ EMAIL CONFIGURATION ------------------
+# Import email configuration
+try:
+    from email_config import SMTP_SERVER, SMTP_PORT, EMAIL_ADDRESS, EMAIL_PASSWORD, SCHOOL_NAME, ADMIN_EMAIL
+except ImportError:
+    # Fallback configuration if email_config.py doesn't exist
+    SMTP_SERVER = "smtp.gmail.com"
+    SMTP_PORT = 587
+    EMAIL_ADDRESS = "soham.username@gmail.com"  # Change this to your Gmail
+    EMAIL_PASSWORD = "tqqv ttol jkby gkil"    # Change this to your Gmail App Password
+    SCHOOL_NAME = "School Administration"
+    ADMIN_EMAIL = "admin@school.com"
+
+# ------------------ COUNSELLING STORAGE ------------------
+def store_counselling_record(sr_no, student_name, teacher_name, message, timestamp):
+    """Store counselling record in Google Sheets"""
+    try:
+        if GOOGLE_SHEETS_AVAILABLE:
+            # Try to open counselling sheet
+            try:
+                counselling_sheet = CLIENT.open("Students.Details").worksheet("Counselling")
+            except:
+                # Create counselling sheet if it doesn't exist
+                counselling_sheet = CLIENT.open("Students.Details").add_worksheet(title="Counselling", rows=1000, cols=6)
+                # Add headers
+                counselling_sheet.insert_row(["Sr No", "Student Name", "Teacher", "Message", "Timestamp", "Status"], 1)
+            
+            # Add new record
+            new_row = [sr_no, student_name, teacher_name, message, timestamp, "Sent"]
+            counselling_sheet.append_row(new_row)
+            return True, "Counselling record stored"
+        else:
+            # Store locally
+            return store_counselling_local(sr_no, student_name, teacher_name, message, timestamp)
+    except Exception as e:
+        print(f"Error storing counselling record: {e}")
+        return store_counselling_local(sr_no, student_name, teacher_name, message, timestamp)
+
+def store_counselling_local(sr_no, student_name, teacher_name, message, timestamp):
+    """Store counselling record locally"""
+    try:
+        counselling_file = "counselling_records.json"
+        if os.path.exists(counselling_file):
+            with open(counselling_file, 'r') as f:
+                records = json.load(f)
+        else:
+            records = []
+        
+        new_record = {
+            "sr_no": sr_no,
+            "student_name": student_name,
+            "teacher_name": teacher_name,
+            "message": message,
+            "timestamp": timestamp,
+            "status": "Sent"
+        }
+        records.append(new_record)
+        
+        with open(counselling_file, 'w') as f:
+            json.dump(records, f, indent=2)
+        
+        return True, "Counselling record stored locally"
+    except Exception as e:
+        print(f"Error storing counselling locally: {e}")
+        return False, str(e)
+
+def get_counselling_history(sr_no):
+    """Get counselling history for a student"""
+    try:
+        if GOOGLE_SHEETS_AVAILABLE:
+            try:
+                counselling_sheet = CLIENT.open("Students.Details").worksheet("Counselling")
+                all_records = counselling_sheet.get_all_records()
+                # Filter records for this student
+                student_records = [r for r in all_records if str(r.get("Sr No")) == str(sr_no)]
+                return student_records
+            except:
+                return get_counselling_history_local(sr_no)
+        else:
+            return get_counselling_history_local(sr_no)
+    except Exception as e:
+        print(f"Error getting counselling history: {e}")
+        return get_counselling_history_local(sr_no)
+
+def get_counselling_history_local(sr_no):
+    """Get counselling history from local storage"""
+    try:
+        counselling_file = "counselling_records.json"
+        if os.path.exists(counselling_file):
+            with open(counselling_file, 'r') as f:
+                records = json.load(f)
+            # Filter records for this student
+            student_records = [r for r in records if str(r.get("sr_no")) == str(sr_no)]
+            return student_records
+        return []
+    except Exception as e:
+        print(f"Error getting counselling history locally: {e}")
+        return []
+
+def get_counselling_counts():
+    """Get counselling count for each student"""
+    try:
+        if GOOGLE_SHEETS_AVAILABLE:
+            try:
+                counselling_sheet = CLIENT.open("Students.Details").worksheet("Counselling")
+                all_records = counselling_sheet.get_all_records()
+                counts = {}
+                for record in all_records:
+                    sr_no = str(record.get("Sr No"))
+                    if sr_no:
+                        counts[sr_no] = counts.get(sr_no, 0) + 1
+                return counts
+            except:
+                return get_counselling_counts_local()
+        else:
+            return get_counselling_counts_local()
+    except Exception as e:
+        print(f"Error getting counselling counts: {e}")
+        return get_counselling_counts_local()
+
+def get_counselling_counts_local():
+    """Get counselling counts from local storage"""
+    try:
+        counselling_file = "counselling_records.json"
+        if os.path.exists(counselling_file):
+            with open(counselling_file, 'r') as f:
+                records = json.load(f)
+            counts = {}
+            for record in records:
+                sr_no = str(record.get("sr_no"))
+                if sr_no:
+                    counts[sr_no] = counts.get(sr_no, 0) + 1
+            return counts
+        return {}
+    except Exception as e:
+        print(f"Error getting counselling counts locally: {e}")
+        return {}
+
+# ------------------ EMAIL FUNCTIONS ------------------
+def send_counselling_email(student_email, student_name, teacher_name, message):
+    """Send counselling email to student"""
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = student_email
+        msg['Subject'] = f"Counselling Session - {student_name}"
+        
+        # Email body
+        body = f"""
+Dear {student_name},
+
+You have been scheduled for a counselling session.
+
+Teacher: {teacher_name}
+Message: {message}
+
+Please contact your teacher for further details.
+
+Best regards,
+{SCHOOL_NAME}
+        """
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Connect to Gmail SMTP server
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        
+        # Send email
+        text = msg.as_string()
+        server.sendmail(EMAIL_ADDRESS, student_email, text)
+        server.quit()
+        
+        return True, "Email sent successfully"
+        
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False, f"Failed to send email: {str(e)}"
 
 
 @app.route("/test-form", methods=["POST"])
@@ -266,14 +450,17 @@ def teacher_login():
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
 
-        # Generate fresh CAPTCHA for next attempt
-        fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        session["captcha"] = fresh_captcha
-
+        # Check CAPTCHA first before regenerating
         if captcha_input != captcha_code:
+            # Generate fresh CAPTCHA for next attempt
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
             return render_template("teacher-login.html", captcha=fresh_captcha, error="CAPTCHA incorrect")
 
         if not check_teacher_credentials(userid, password):
+            # Generate fresh CAPTCHA for next attempt
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
             if not GOOGLE_SHEETS_AVAILABLE:
                 return render_template("teacher-login.html", captcha=fresh_captcha, error="Authentication service unavailable - Google Sheets connection required")
             else:
@@ -304,6 +491,15 @@ def teacher_dashboard():
         return redirect(url_for('teacher_login'))
     
     data, headers = fetch_student_data()
+    
+    # Get counselling counts for each student
+    counselling_counts = get_counselling_counts()
+    
+    # Add counselling count to each student record
+    for student in data:
+        sr_no = str(student.get('Sr No', ''))
+        student['counselling_count'] = counselling_counts.get(sr_no, 0)
+    
     return render_template("dashboard.html", data=data, headers=headers)
 
 
@@ -324,15 +520,55 @@ def student_profile(sr_no):
     student = next((s for s in data if str(s.get("Sr No")) == str(sr_no)), None)
     if not student:
         return "Student not found", 404
-    return render_template("student_profile.html", student=student, headers=headers)
+    
+    # Get counselling history for this student
+    counselling_history = get_counselling_history(sr_no)
+    
+    return render_template("student_profile.html", student=student, headers=headers, counselling_history=counselling_history)
 
 
 # ------------------ COUNSELING ------------------
 @app.route("/schedule/<int:sr_no>", methods=["POST"])
 def schedule_counseling(sr_no):
+    # Check if teacher is logged in
+    if not session.get('teacher_logged_in'):
+        return redirect(url_for('teacher_login'))
+    
     message = request.form.get("message")
-    print(f"Counseling scheduled for student {sr_no}: {message}")
-    return redirect(url_for("student_profile", sr_no=sr_no))
+    teacher_name = session.get('teacher_userid', 'Teacher')
+    
+    # Get student data to find email
+    data, headers = fetch_student_data()
+    student = next((s for s in data if str(s.get("Sr No")) == str(sr_no)), None)
+    
+    if not student:
+        return "Student not found", 404
+    
+    student_name = student.get("Student Name", "Student")
+    student_email = student.get("Students Email", "")
+    
+    if not student_email:
+        return f"Student email not found for {student_name}", 400
+    
+    # Send counselling email
+    success, email_message = send_counselling_email(student_email, student_name, teacher_name, message)
+    
+    if success:
+        # Store counselling record
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        store_success, store_message = store_counselling_record(sr_no, student_name, teacher_name, message, timestamp)
+        
+        print(f"Counselling email sent to {student_name} ({student_email}): {message}")
+        if store_success:
+            print(f"Counselling record stored: {store_message}")
+        else:
+            print(f"Failed to store counselling record: {store_message}")
+        
+        return redirect(url_for("student_profile", sr_no=sr_no))
+    else:
+        print(f"Failed to send counselling email: {email_message}")
+        return f"Failed to send email: {email_message}", 500
 
 
 # ------------------ RUN APP ------------------

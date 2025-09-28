@@ -86,18 +86,43 @@
             </table>
         </div>
 
+        <!-- Counseling History -->
+        {% if counselling_history %}
+        <div class="card">
+            <h2>📋 Counseling History ({{ counselling_history|length }} session{{ 's' if counselling_history|length != 1 else '' }})</h2>
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for record in counselling_history %}
+                <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #f8f9fa;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="color: #667eea;">{{ record.get('Teacher', record.get('teacher_name', 'Teacher')) }}</strong>
+                        <span style="color: #666; font-size: 0.9em;">{{ record.get('Timestamp', record.get('timestamp', 'Unknown date')) }}</span>
+                    </div>
+                    <div style="color: #333; line-height: 1.4;">
+                        {{ record.get('Message', record.get('message', 'No message')) }}
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">
+                            {{ record.get('Status', record.get('status', 'Sent')) }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Counseling Form -->
         <div class="card">
-            <h2>Schedule Counseling</h2>
+            <h2>💬 Schedule New Counseling Session</h2>
             <form action="{{ url_for('schedule_counseling', sr_no=student['Sr No']) }}" method="POST">
                 <label for="message">Enter your message or notes:</label>
                 <textarea id="message" name="message" placeholder="Write your counseling message here..." required></textarea>
-                <button type="submit" class="btn">Schedule Counseling</button>
+                <button type="submit" class="btn">📧 Send Counseling Email</button>
             </form>
         </div>
 
         <!-- Back to Dashboard -->
-        <a href="{{ url_for('teacher_dashboard') }}" class="btn">Back to Dashboard</a>
+        <a href="{{ url_for('teacher_dashboard') }}" class="btn">← Back to Dashboard</a>
 
     </div>
 </body>
