@@ -19,8 +19,8 @@ A comprehensive web application for teachers to monitor student performance, tra
 ### Prerequisites
 
 - Python 3.7 or higher
-- Gmail account (for email functionality)
 - Access to the shared Google Sheets (provided by team lead)
+- **No Gmail setup needed** - email is already configured for the team
 
 ### Installation
 
@@ -52,12 +52,7 @@ A comprehensive web application for teachers to monitor student performance, tra
    ```bash
    cp email_config.py.example email_config.py
    ```
-   Edit `email_config.py` with your Gmail credentials:
-   ```python
-   EMAIL_ADDRESS = "your-email@gmail.com"
-   EMAIL_PASSWORD = "your-gmail-app-password"  # Use App Password, not regular password
-   SCHOOL_NAME = "AISSMS IOIT"  # Keep the same school name
-   ```
+   **No changes needed** - the email configuration is already set up for team use.
 
    **Google Sheets Configuration:**
    ```bash
@@ -75,15 +70,14 @@ A comprehensive web application for teachers to monitor student performance, tra
 
 ## 📋 Setup Instructions
 
-### Gmail App Password Setup
+### Email Setup (Team Members)
 
-1. Go to [Google Account Settings](https://myaccount.google.com/)
-2. Navigate to **Security** → **2-Step Verification** (enable if not already)
-3. Go to **App passwords** → **Generate app password**
-4. Select **Mail** and **Other (custom name)**
-5. Enter "Student Portal" as the name
-6. Copy the generated 16-character password
-7. Use this password in `email_config.py`
+**No email setup required** - the team Gmail account is already configured:
+- **Email**: soham.username@gmail.com
+- **App Password**: Already set up
+- **School Name**: AISSMS IOIT
+
+All team members will send counselling emails from the same account.
 
 ### Google Sheets Setup (Team Members)
 

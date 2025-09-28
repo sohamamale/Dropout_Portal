@@ -30,13 +30,12 @@
 
 ### Email Configuration
 
-Edit `email_config.py` with your own Gmail credentials:
+**No email setup needed** - the team Gmail account is already configured:
+- **Email**: soham.username@gmail.com
+- **App Password**: Already set up
+- **School Name**: AISSMS IOIT
 
-```python
-EMAIL_ADDRESS = "your-email@gmail.com"
-EMAIL_PASSWORD = "your-gmail-app-password"  # Use App Password
-SCHOOL_NAME = "AISSMS IOIT"  # Keep this the same
-```
+All team members will send counselling emails from the same account.
 
 ### What You'll See
 
@@ -48,7 +47,7 @@ SCHOOL_NAME = "AISSMS IOIT"  # Keep this the same
 ### Important Notes
 
 - **Don't modify** the Google Sheets structure
-- **Use your own Gmail** for sending counselling emails
+- **Use the team Gmail** for sending counselling emails
 - **All counselling records** are shared among team members
 - **Student data** is read-only (managed by team lead)
 

@@ -1,11 +1,11 @@
 # Email Configuration for Counselling System
-# Copy this file to email_config.py and update with your credentials
+# Team Project - Shared Email Configuration
 
 # Gmail SMTP Settings
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 
-# Your Gmail credentials
+# Team Gmail credentials (shared by all team members)
 # IMPORTANT: Use App Password, not your regular Gmail password
 # To generate App Password:
 # 1. Go to Google Account settings
@@ -13,9 +13,9 @@ SMTP_PORT = 587
 # 3. App passwords → Generate app password
 # 4. Use the generated password below
 
-EMAIL_ADDRESS = "your-email@gmail.com"  # Replace with your Gmail
-EMAIL_PASSWORD = "your-app-password"    # Replace with your Gmail App Password
+EMAIL_ADDRESS = "soham.username@gmail.com"  # Team Gmail account
+EMAIL_PASSWORD = "tqqv ttol jkby gkil"    # Team Gmail App Password
 
 # Email Template Settings
-SCHOOL_NAME = "Your School Name"  # Replace with your school name
-ADMIN_EMAIL = "admin@yourschool.com"  # Replace with admin email
+SCHOOL_NAME = "AISSMS IOIT"  # School name
+ADMIN_EMAIL = "admin@yourschool.com"  # Admin email

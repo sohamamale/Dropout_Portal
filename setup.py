@@ -86,13 +86,13 @@ def print_next_steps():
     print("🎉 Setup completed successfully!")
     print("=" * 60)
     print("\n📋 Next steps:")
-    print("1. Edit email_config.py with your Gmail credentials")
-    print("2. Get service-account-key.json from your team lead")
-    print("3. Run the application:")
+    print("1. Get service-account-key.json from your team lead")
+    print("2. Run the application:")
     print("   - Windows: venv\\Scripts\\activate && python app.py")
     print("   - macOS/Linux: source venv/bin/activate && python app.py")
-    print("4. Open http://localhost:5000 in your browser")
+    print("3. Open http://localhost:5000 in your browser")
     print("\n📖 For detailed instructions, see README.md")
+    print("📧 Email is already configured for team use")
 
 def main():
     print_header()
