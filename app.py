@@ -10,6 +10,11 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+# Session configuration to improve reliability across systems
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=6)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False  # set True only when serving over HTTPS
 
 # ------------------ GOOGLE SHEETS SETUP ------------------
 SCOPE = ["https://spreadsheets.google.com/feeds",
@@ -382,11 +387,19 @@ def index():
 # ------------------ STUDENT LOGIN ------------------
 @app.route("/student-login", methods=["GET", "POST"])
 def student_login():
+    # Ensure session persists for this user
+    session.permanent = True
     if request.method == "POST":
         prn = request.form.get("studentPRN")  # from login form
         otp = request.form.get("studentOTP")
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
+
+        # If captcha not present in session (e.g., new browser/session), regenerate and show form
+        if not captcha_code:
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
+            return render_template("student-login.html", captcha=fresh_captcha, error="Session expired. Please try again.")
 
         # Debug logging
         print(f"DEBUG Student Login - PRN: {prn}, OTP: {otp}")
@@ -463,11 +476,19 @@ def teacher_register():
 # ------------------ TEACHER LOGIN ------------------
 @app.route("/teacher-login", methods=["GET", "POST"])
 def teacher_login():
+    # Ensure session persists for this user
+    session.permanent = True
     if request.method == "POST":
         userid = request.form.get("teacherUserId")
         password = request.form.get("teacherPassword")
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
+
+        # If captcha missing (fresh/new session), regenerate and prompt again
+        if not captcha_code:
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
+            return render_template("teacher-login.html", captcha=fresh_captcha, error="Session expired. Please try again.")
 
         # Debug logging
         print(f"DEBUG Teacher Login - UserID: {userid}, Password: {'*' * len(password) if password else 'None'}")
