@@ -80,6 +80,12 @@
       text-decoration: underline;
       cursor: pointer;
     }
+
+    .error {
+      color: #ff6961;
+      margin-top: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -87,12 +93,17 @@
     <h1>Student Login</h1>
     <div class="captcha-box">{{ captcha }}</div>
     <form method="POST">
-      <input type="text" name="studentUserId" placeholder="User ID" required>
+      <input type="text" name="studentPRN" placeholder="PRN" required>
       <input type="password" name="studentPassword" placeholder="Password" required>
       <input type="text" name="studentOTP" placeholder="Enter OTP" required>
       <input type="text" name="captchaInput" placeholder="Enter CAPTCHA" required>
       <button type="submit">Login</button>
     </form>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
     <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
   </div>
 </body>

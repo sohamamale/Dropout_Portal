@@ -388,20 +388,34 @@ def student_login():
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
 
+        # Debug logging
+        print(f"DEBUG Student Login - PRN: {prn}, OTP: {otp}")
+        print(f"DEBUG Student Login - Captcha Input: '{captcha_input}', Session Captcha: '{captcha_code}'")
+
         # Verify OTP
         if otp != "123456":
-            return "<script>alert('Invalid OTP'); window.location='/student-login';</script>"
+            print("DEBUG: Invalid OTP")
+            # Generate fresh CAPTCHA for next attempt
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
+            return render_template("student-login.html", captcha=fresh_captcha, error="Invalid OTP")
 
         # Verify CAPTCHA
         if captcha_input != captcha_code:
-            return "<script>alert('CAPTCHA incorrect'); window.location='/student-login';</script>"
+            print("DEBUG: Invalid CAPTCHA")
+            # Generate fresh CAPTCHA for next attempt
+            fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            session["captcha"] = fresh_captcha
+            return render_template("student-login.html", captcha=fresh_captcha, error="CAPTCHA incorrect")
 
         # Login success → redirect to student dashboard
+        print("DEBUG: Student login successful")
         return redirect(url_for("student_dashboard", prn=prn))
 
     # GET request: generate CAPTCHA
     captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
     session["captcha"] = captcha
+    print(f"DEBUG: Generated new student captcha: {captcha}")
     return render_template("student-login.html", captcha=captcha)
 
 
@@ -455,23 +469,32 @@ def teacher_login():
         captcha_input = request.form.get("captchaInput")
         captcha_code = session.get("captcha")
 
+        # Debug logging
+        print(f"DEBUG Teacher Login - UserID: {userid}, Password: {'*' * len(password) if password else 'None'}")
+        print(f"DEBUG Teacher Login - Captcha Input: '{captcha_input}', Session Captcha: '{captcha_code}'")
+
         # Check CAPTCHA first before regenerating
         if captcha_input != captcha_code:
+            print("DEBUG: Invalid CAPTCHA")
             # Generate fresh CAPTCHA for next attempt
             fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
             session["captcha"] = fresh_captcha
+            print(f"DEBUG: Generated fresh teacher captcha: {fresh_captcha}")
             return render_template("teacher-login.html", captcha=fresh_captcha, error="CAPTCHA incorrect")
 
         if not check_teacher_credentials(userid, password):
+            print("DEBUG: Invalid credentials")
             # Generate fresh CAPTCHA for next attempt
             fresh_captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
             session["captcha"] = fresh_captcha
+            print(f"DEBUG: Generated fresh teacher captcha: {fresh_captcha}")
             if not GOOGLE_SHEETS_AVAILABLE:
                 return render_template("teacher-login.html", captcha=fresh_captcha, error="Authentication service unavailable - Google Sheets connection required")
             else:
                 return render_template("teacher-login.html", captcha=fresh_captcha, error="Invalid UserID or Password")
 
         # ✅ Success → store teacher session and redirect
+        print("DEBUG: Teacher login successful")
         session['teacher_logged_in'] = True
         session['teacher_userid'] = userid
         return redirect(url_for("teacher_dashboard"))
@@ -479,6 +502,7 @@ def teacher_login():
     # GET request: show fresh CAPTCHA
     captcha = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
     session["captcha"] = captcha
+    print(f"DEBUG: Generated new teacher captcha: {captcha}")
     return render_template("teacher-login.html", captcha=captcha)
 
 # ------------------ TEACHER LOGOUT ------------------
